@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import Sidebar from '../components/Sidebar.jsx';
 
 function Users() {
   const [users, setUsers] = useState([]);
@@ -69,30 +70,27 @@ function Users() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div className="flex gap-4">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-blue-600 hover:text-blue-700 font-semibold"
-            >
-              ← Trang chủ
-            </button>
-            <h1 className="text-2xl font-bold text-gray-800">Quản lý người dùng</h1>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
-          >
-            Đăng xuất
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* Sidebar */}
+      <Sidebar />
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="bg-white shadow-md">
+          <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-800">Quản lý người dùng</h1>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition"
+            >
+              Đăng xuất
+            </button>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
@@ -182,7 +180,8 @@ function Users() {
             </table>
           </div>
         </div>
-      </main>
+        </main>
+      </div>
 
       {/* Modal for User Details */}
       {showModal && selectedUser && (
