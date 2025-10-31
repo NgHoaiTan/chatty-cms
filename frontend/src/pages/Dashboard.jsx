@@ -9,11 +9,13 @@ function Dashboard() {
     totalUsers: 0,
     activeUsers: 0,
     inactiveUsers: 0,
+    usersJoinedThisMonth: 0,
     totalPosts: 0,
     totalFollowers: 0,
     totalFollowing: 0
   });
   const [loading, setLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -81,14 +83,24 @@ function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
-      <Sidebar />
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white shadow-md">
           <div className="px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="md:hidden p-2 text-gray-600 hover:text-gray-800"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+            </div>
             <div className="flex items-center gap-4">
               <span className="text-gray-700">Xin chào, {admin?.name || admin?.email}</span>
               <button
@@ -106,7 +118,7 @@ function Dashboard() {
         <div className="bg-white rounded-lg shadow-md p-6">
           <h2 className="text-xl font-semibold mb-4">Chào mừng đến với Trang Admin</h2>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             {/* Stats Cards */}
             <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số người dùng</h3>
@@ -115,6 +127,12 @@ function Dashboard() {
                 <span className="text-green-600">{stats.activeUsers}</span> đang hoạt động | 
                 <span className="text-red-600"> {stats.inactiveUsers}</span> không hoạt động
               </p>
+            </div>
+
+            <div className="bg-indigo-50 p-6 rounded-lg border-l-4 border-indigo-500">
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Người dùng mới trong tháng</h3>
+              <p className="text-4xl font-bold text-indigo-600">{stats.usersJoinedThisMonth}</p>
+              <p className="text-xs text-gray-500 mt-2">Tính từ đầu tháng đến nay</p>
             </div>
 
             <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">

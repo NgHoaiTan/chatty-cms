@@ -3,13 +3,10 @@ import UserProfile from '../models/UserProfile.js';
 
 export const getUsers = async (req, res) => {
   try {
-    // Get all auth records (users from Auth collection)
     const auths = await Auth.find();
     
-    // Get all user profiles
     const profiles = await UserProfile.find();
     
-    // Combine auth data with profile data
     const usersWithProfile = auths.map((auth) => {
       const authObj = auth.toObject();
       
@@ -89,6 +86,14 @@ export const getUsersStats = async (req, res) => {
       ]
     });
     
+    // Count users joined in current month (based on createdAt)
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const usersJoinedThisMonth = await Auth.countDocuments({
+      createdAt: { $gte: startOfMonth, $lt: startOfNextMonth }
+    });
+    
     // Get profiles for additional stats
     const profiles = await UserProfile.find();
     const totalPosts = profiles.reduce((sum, profile) => sum + (profile.postsCount || 0), 0);
@@ -101,6 +106,7 @@ export const getUsersStats = async (req, res) => {
         totalUsers,
         activeUsers,
         inactiveUsers,
+        usersJoinedThisMonth,
         totalPosts,
         totalFollowers,
         totalFollowing
@@ -112,6 +118,23 @@ export const getUsersStats = async (req, res) => {
       success: false,
       message: 'Lỗi khi lấy thống kê'
     });
+  }
+};
+
+export const getNewUsersThisMonth = async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    const count = await Auth.countDocuments({
+      createdAt: { $gte: startOfMonth, $lt: startOfNextMonth }
+    });
+
+    res.json({ success: true, month: now.getMonth() + 1, year: now.getFullYear(), newUsers: count });
+  } catch (error) {
+    console.error('Error fetching new users this month:', error);
+    res.status(500).json({ success: false, message: 'Lỗi khi lấy số thành viên mới tháng này' });
   }
 };
 

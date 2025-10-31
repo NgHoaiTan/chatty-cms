@@ -1,15 +1,17 @@
 import mongoose from 'mongoose';
 
-const userProfileSchema = new mongoose.Schema({
-  authId: { type: mongoose.Schema.Types.ObjectId, ref: 'Auth', index: true },
+const { Schema, model } = mongoose;
+
+const userSchema = new Schema({
+  authId: { type: Schema.Types.ObjectId, ref: 'Auth', index: true },
   profilePicture: { type: String, default: '' },
   postsCount: { type: Number, default: 0 },
   followersCount: { type: Number, default: 0 },
   followingCount: { type: Number, default: 0 },
   passwordResetToken: { type: String, default: '' },
   passwordResetExpires: { type: Number },
-  blocked: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  blockedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  blocked: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  blockedBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   notifications: {
     messages: { type: Boolean, default: true },
     reactions: { type: Boolean, default: true },
@@ -28,11 +30,6 @@ const userProfileSchema = new mongoose.Schema({
   quote: { type: String, default: '' },
   bgImageVersion: { type: String, default: '' },
   bgImageId: { type: String, default: '' }
-}, {
-  collection: 'User'
 });
 
-const UserProfile = mongoose.model('UserProfile', userProfileSchema);
-
-export default UserProfile;
-
+export const UserModel = model('User', userSchema, 'User');
