@@ -1,5 +1,5 @@
 import Auth from '../models/Auth.js';
-import UserProfile from '../models/UserProfile.js';
+import UserProfile from '../models/User.js';
 
 export const getUsers = async (req, res) => {
   try {
@@ -127,14 +127,33 @@ export const getNewUsersThisMonth = async (req, res) => {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const count = await Auth.countDocuments({
+    const auths = await Auth.find({
       createdAt: { $gte: startOfMonth, $lt: startOfNextMonth }
+    }).sort({ createdAt: -1 });
+
+    const profiles = await UserProfile.find({
+      authId: { $in: auths.map(a => a._id) }
     });
 
-    res.json({ success: true, month: now.getMonth() + 1, year: now.getFullYear(), newUsers: count });
+    const usersWithProfile = auths.map((auth) => {
+      const profile = profiles.find(p => p.authId?.toString() === auth._id?.toString());
+      return {
+        ...auth.toObject(),
+        profile: profile || null
+      };
+    });
+
+    res.json({
+      success: true,
+      count: usersWithProfile.length,
+      users: usersWithProfile
+    });
   } catch (error) {
     console.error('Error fetching new users this month:', error);
-    res.status(500).json({ success: false, message: 'Lỗi khi lấy số thành viên mới tháng này' });
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy người dùng mới trong tháng'
+    });
   }
 };
 

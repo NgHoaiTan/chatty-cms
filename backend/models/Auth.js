@@ -46,3 +46,4 @@ authSchema.methods.hashPassword = async function (password) {
 };
 
 export const AuthModel = model('Auth', authSchema, 'Auth');
+export default AuthModel;

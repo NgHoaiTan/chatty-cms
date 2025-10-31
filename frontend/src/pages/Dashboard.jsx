@@ -14,6 +14,7 @@ function Dashboard() {
     totalFollowers: 0,
     totalFollowing: 0
   });
+  const [newUsers, setNewUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
@@ -48,6 +49,16 @@ function Dashboard() {
           
           if (statsResponse.data.success) {
             setStats(statsResponse.data.stats);
+          }
+
+          // Fetch new users this month
+          const newUsersResp = await axios.get('/api/users/new-this-month', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (newUsersResp.data.success) {
+            setNewUsers(newUsersResp.data.users || []);
           }
         } else {
           localStorage.removeItem('adminToken');
@@ -130,7 +141,7 @@ function Dashboard() {
             </div>
 
             <div className="bg-indigo-50 p-6 rounded-lg border-l-4 border-indigo-500">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Người dùng mới trong tháng</h3>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số người dùng mới</h3>
               <p className="text-4xl font-bold text-indigo-600">{stats.usersJoinedThisMonth}</p>
               <p className="text-xs text-gray-500 mt-2">Tính từ đầu tháng đến nay</p>
             </div>
@@ -158,6 +169,40 @@ function Dashboard() {
               <p className="text-gray-700"><span className="font-semibold">Email:</span> {admin?.email}</p>
               <p className="text-gray-700"><span className="font-semibold">Tên:</span> {admin?.name}</p>
             </div>
+          </div>
+
+          {/* New Users This Month */}
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-4">Người dùng mới </h3>
+            {newUsers.length === 0 ? (
+              <p className="text-gray-600">Chưa có người dùng mới trong tháng.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tên</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">UID</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ngày tạo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {newUsers.slice(0, 10).map((u) => (
+                      <tr key={u._id}>
+                        <td className="px-4 py-2 text-sm text-gray-900">{u.username || '-'}</td>
+                        <td className="px-4 py-2 text-sm text-gray-700">{u.email || '-'}</td>
+                        <td className="px-4 py-2 text-sm text-gray-700">{u.uId || '-'}</td>
+                        <td className="px-4 py-2 text-sm text-gray-700">{u.createdAt ? new Date(u.createdAt).toLocaleString() : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {newUsers.length > 10 && (
+                  <p className="text-xs text-gray-500 mt-2">Hiển thị 10 người dùng mới nhất</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
         </main>
