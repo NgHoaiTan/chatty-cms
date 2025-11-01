@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar.jsx';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts';
 
 function Dashboard() {
   const [admin, setAdmin] = useState(null);
@@ -15,9 +27,19 @@ function Dashboard() {
     totalFollowing: 0
   });
   const [newUsers, setNewUsers] = useState([]);
+  const [usersByMonth, setUsersByMonth] = useState([]);
+  const [chartYear, setChartYear] = useState(new Date().getFullYear());
+  const [loadingChart, setLoadingChart] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Tạo danh sách năm từ năm hiện tại về 2020 (hiển thị năm mới nhất trước)
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  for (let year = currentYear; year >= 2020; year--) {
+    years.push(year);
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -60,6 +82,18 @@ function Dashboard() {
           if (newUsersResp.data.success) {
             setNewUsers(newUsersResp.data.users || []);
           }
+
+          // Fetch users by month (năm hiện tại)
+          const currentYear = new Date().getFullYear();
+          const usersByMonthResp = await axios.get(`/api/users/by-month?year=${currentYear}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          if (usersByMonthResp.data.success) {
+            setUsersByMonth(usersByMonthResp.data.data || []);
+            setChartYear(usersByMonthResp.data.year);
+          }
         } else {
           localStorage.removeItem('adminToken');
           localStorage.removeItem('admin');
@@ -76,6 +110,36 @@ function Dashboard() {
 
     checkAuth();
   }, [navigate]);
+
+  // Hàm fetch dữ liệu theo năm
+  const fetchUsersByMonth = async (year) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    setLoadingChart(true);
+    try {
+      const usersByMonthResp = await axios.get(`/api/users/by-month?year=${year}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (usersByMonthResp.data.success) {
+        setUsersByMonth(usersByMonthResp.data.data || []);
+        setChartYear(usersByMonthResp.data.year);
+      }
+    } catch (error) {
+      console.error('Error fetching users by month:', error);
+    } finally {
+      setLoadingChart(false);
+    }
+  };
+
+  // Xử lý khi thay đổi năm
+  const handleYearChange = (e) => {
+    const selectedYear = parseInt(e.target.value);
+    setChartYear(selectedYear);
+    fetchUsersByMonth(selectedYear);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
@@ -161,14 +225,69 @@ function Dashboard() {
             </div>
           </div>
 
-          {/* Admin Info */}
+          {/* Users Chart by Month */}
           <div className="mt-8">
-            <h3 className="text-lg font-semibold mb-4">Thông tin Admin</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-gray-700"><span className="font-semibold">ID:</span> {admin?.id}</p>
-              <p className="text-gray-700"><span className="font-semibold">Email:</span> {admin?.email}</p>
-              <p className="text-gray-700"><span className="font-semibold">Tên:</span> {admin?.name}</p>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">
+                Biểu đồ số lượng người dùng trong năm {chartYear}
+              </h3>
+              <div className="flex items-center gap-2">
+                <label htmlFor="year-select" className="text-sm font-medium text-gray-700">
+                  Chọn năm:
+                </label>
+                <select
+                  id="year-select"
+                  value={chartYear}
+                  onChange={handleYearChange}
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700"
+                  disabled={loadingChart}
+                >
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+            {loadingChart ? (
+              <div className="bg-gray-50 p-6 rounded-lg flex items-center justify-center h-96">
+                <p className="text-gray-600">Đang tải dữ liệu...</p>
+              </div>
+            ) : usersByMonth.length > 0 ? (
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <ResponsiveContainer width="100%" height={400}>
+                  <LineChart data={usersByMonth} margin={{ top: 10, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="month" 
+                      tick={{ fontSize: 12 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis />
+                    <Tooltip 
+                      formatter={(value) => [value, 'Số lượng người dùng']}
+                      labelFormatter={(label) => label}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="count" 
+                      stroke="#3b82f6" 
+                      strokeWidth={3}
+                      name="Số lượng người dùng"
+                      dot={{ fill: '#3b82f6', r: 5 }}
+                      activeDot={{ r: 8 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              
+              </div>
+            ) : (
+              <p className="text-gray-600">Đang tải dữ liệu biểu đồ...</p>
+            )}
           </div>
 
           {/* New Users This Month */}

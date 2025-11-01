@@ -157,3 +157,55 @@ export const getNewUsersThisMonth = async (req, res) => {
   }
 };
 
+export const getUsersByMonth = async (req, res) => {
+  try {
+    // Lấy năm từ query parameter, mặc định là năm hiện tại
+    let year = parseInt(req.query.year);
+    if (!year || isNaN(year)) {
+      year = new Date().getFullYear();
+    }
+
+    // Validate năm hợp lệ (từ 2000 đến năm hiện tại + 1)
+    const currentYear = new Date().getFullYear();
+    if (year < 2000 || year > currentYear + 1) {
+      year = currentYear;
+    }
+
+    const monthsData = [];
+
+    // Lấy số lượng user theo từng tháng trong năm được chọn
+    for (let month = 0; month < 12; month++) {
+      const startOfMonth = new Date(year, month, 1);
+      const startOfNextMonth = new Date(year, month + 1, 1);
+
+      const count = await Auth.countDocuments({
+        createdAt: { $gte: startOfMonth, $lt: startOfNextMonth }
+      });
+
+      const monthNames = [
+        'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+        'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
+      ];
+
+      monthsData.push({
+        month: monthNames[month],
+        monthNumber: month + 1,
+        count: count,
+        year: year
+      });
+    }
+
+    res.json({
+      success: true,
+      year: year,
+      data: monthsData
+    });
+  } catch (error) {
+    console.error('Error fetching users by month:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lấy thống kê user theo tháng'
+    });
+  }
+};
+
