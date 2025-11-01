@@ -16,7 +16,8 @@ const authSchema = new Schema(
     passwordResetExpires: { type: Number },
     emailActiveToken: { type: String, default: '' },
     emailActiveExpires: { type: Number },
-    isActive: { type: Boolean, default: false }
+    isActive: { type: Boolean, default: false },
+    isDeleted: { type: Boolean, default: false }
   },
   {
     toJSON: {

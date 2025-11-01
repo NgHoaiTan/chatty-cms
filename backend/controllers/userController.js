@@ -3,10 +3,54 @@ import UserProfile from '../models/User.js';
 
 export const getUsers = async (req, res) => {
   try {
-    const auths = await Auth.find();
+    // Lấy query parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const isActiveFilter = req.query.isActive; // 'true', 'false', 'deleted', hoặc undefined
     
-    const profiles = await UserProfile.find();
+    // Xây dựng filter query
+    const filterQuery = {};
     
+    // Filter theo trạng thái deleted
+    if (isActiveFilter === 'deleted') {
+      filterQuery.isDeleted = true;
+    } 
+    // Filter theo trạng thái active/inactive (chỉ khi không phải deleted)
+    else if (isActiveFilter !== undefined && isActiveFilter !== '' && isActiveFilter !== 'all') {
+      filterQuery.isActive = isActiveFilter === 'true';
+      filterQuery.isDeleted = false; // Chỉ lấy user chưa bị xóa
+    } 
+    // Khi filter = 'all', lấy tất cả (bao gồm cả deleted) - không thêm điều kiện isDeleted
+    
+    // Search theo username hoặc email (case-insensitive)
+    if (search) {
+      filterQuery.$or = [
+        { username: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Đếm tổng số users phù hợp với filter
+    const totalUsers = await Auth.countDocuments(filterQuery);
+    
+    // Tính toán pagination
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(totalUsers / limit);
+    
+    // Lấy users với filter và pagination
+    const auths = await Auth.find(filterQuery)
+      .sort({ createdAt: -1 }) // Sắp xếp theo ngày tạo mới nhất
+      .skip(skip)
+      .limit(limit);
+    
+    // Lấy profiles tương ứng
+    const authIds = auths.map(auth => auth._id);
+    const profiles = await UserProfile.find({
+      authId: { $in: authIds }
+    });
+    
+    // Kết hợp users với profiles
     const usersWithProfile = auths.map((auth) => {
       const authObj = auth.toObject();
       
@@ -26,6 +70,10 @@ export const getUsers = async (req, res) => {
     res.json({
       success: true,
       count: usersWithProfile.length,
+      totalUsers: totalUsers,
+      currentPage: page,
+      totalPages: totalPages,
+      limit: limit,
       users: usersWithProfile
     });
   } catch (error) {
@@ -66,6 +114,66 @@ export const getUserById = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy thông tin người dùng'
+    });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find auth by ID
+    const auth = await Auth.findById(id);
+    
+    if (!auth) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    // Soft delete: Set isDeleted = true instead of actually deleting
+    await Auth.findByIdAndUpdate(id, { isDeleted: true });
+
+    res.json({
+      success: true,
+      message: 'Xóa người dùng thành công'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi xóa người dùng'
+    });
+  }
+};
+
+export const restoreUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Find auth by ID
+    const auth = await Auth.findById(id);
+    
+    if (!auth) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    // Restore user: Set isDeleted = false
+    await Auth.findByIdAndUpdate(id, { isDeleted: false });
+
+    res.json({
+      success: true,
+      message: 'Khôi phục người dùng thành công'
+    });
+  } catch (error) {
+    console.error('Error restoring user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi khôi phục người dùng'
     });
   }
 };
