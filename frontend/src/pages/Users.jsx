@@ -231,10 +231,8 @@ function Users() {
     return date.toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).replace('lúc', '').trim();
+      day: 'numeric'
+    });
   };
 
   const handleLogout = () => {

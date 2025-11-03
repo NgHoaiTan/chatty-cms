@@ -199,15 +199,14 @@ function Dashboard() {
               <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số người dùng</h3>
               <p className="text-4xl font-bold text-blue-600">{stats.totalUsers}</p>
               <p className="text-xs text-gray-500 mt-2">
-                <span className="text-green-600">{stats.activeUsers}</span> đang hoạt động | 
-                <span className="text-red-600"> {stats.inactiveUsers}</span> không hoạt động
+                  
               </p>
             </div>
 
             <div className="bg-indigo-50 p-6 rounded-lg border-l-4 border-indigo-500">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số người dùng mới</h3>
               <p className="text-4xl font-bold text-indigo-600">{stats.usersJoinedThisMonth}</p>
-              <p className="text-xs text-gray-500 mt-2">Tính từ đầu tháng đến nay</p>
+               <p className="text-xs text-gray-500 mt-2">Tính từ đầu tháng đến nay</p>
             </div>
 
             <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">

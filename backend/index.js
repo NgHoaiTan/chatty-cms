@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
+import postRoutes from './routes/postRoutes.js';
 import { connectDatabase } from './config/database.js';
 import { verifyToken } from './middleware/authMiddleware.js';
 
@@ -18,6 +19,7 @@ app.use(express.json());
 // Routes
 app.use('/api/admin', authRoutes);
 app.use('/api/users', verifyToken, userRoutes);
+app.use('/api/posts', verifyToken, postRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
