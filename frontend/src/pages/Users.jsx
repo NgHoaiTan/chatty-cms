@@ -1,13 +1,24 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  
+  // Confirm dialog states
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    type: 'danger'
+  });
 
   // Filter và search states
   const [searchTerm, setSearchTerm] = useState('');
@@ -95,63 +106,71 @@ function Users() {
   };
 
   // Xử lý xóa user (soft delete)
-  const handleDeleteUser = async (userId, username) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn xóa người dùng "${username}"?`)) {
-      return;
-    }
-
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await axios.delete(`/api/users/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
+  const handleDeleteUser = (userId, username) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Xác nhận xóa người dùng',
+      message: `Bạn có chắc chắn muốn xóa người dùng "${username}"?`,
+      type: 'danger',
+      onConfirm: async () => {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          navigate('/login');
+          return;
         }
-      });
 
-      if (response.data.success) {
-        alert('Xóa người dùng thành công!');
-        // Refetch users sau khi xóa
-        fetchUsers(currentPage, searchTerm, activeFilter);
+        try {
+          const response = await axios.delete(`/api/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+
+          if (response.data.success) {
+            toast.success('Xóa người dùng thành công!');
+            // Refetch users sau khi xóa
+            fetchUsers(currentPage, searchTerm, activeFilter);
+          }
+        } catch (error) {
+          console.error('Error deleting user:', error);
+          toast.error('Có lỗi xảy ra khi xóa người dùng');
+        }
       }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Có lỗi xảy ra khi xóa người dùng');
-    }
+    });
   };
 
   // Xử lý khôi phục user
-  const handleRestoreUser = async (userId, username) => {
-    if (!window.confirm(`Bạn có chắc chắn muốn khôi phục người dùng "${username}"?`)) {
-      return;
-    }
-
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      const response = await axios.post(`/api/users/${userId}/restore`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`
+  const handleRestoreUser = (userId, username) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Xác nhận khôi phục người dùng',
+      message: `Bạn có chắc chắn muốn khôi phục người dùng "${username}"?`,
+      type: 'warning',
+      onConfirm: async () => {
+        const token = localStorage.getItem('adminToken');
+        if (!token) {
+          navigate('/login');
+          return;
         }
-      });
 
-      if (response.data.success) {
-        alert('Khôi phục người dùng thành công!');
-        // Refetch users sau khi khôi phục
-        fetchUsers(currentPage, searchTerm, activeFilter);
+        try {
+          const response = await axios.post(`/api/users/${userId}/restore`, {}, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+
+          if (response.data.success) {
+            toast.success('Khôi phục người dùng thành công!');
+            // Refetch users sau khi khôi phục
+            fetchUsers(currentPage, searchTerm, activeFilter);
+          }
+        } catch (error) {
+          console.error('Error restoring user:', error);
+          toast.error('Có lỗi xảy ra khi khôi phục người dùng');
+        }
       }
-    } catch (error) {
-      console.error('Error restoring user:', error);
-      alert('Có lỗi xảy ra khi khôi phục người dùng');
-    }
+    });
   };
 
   const handleUserClick = (user) => {
@@ -496,6 +515,18 @@ function Users() {
         </div>
         </main>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm || (() => {})}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+      />
     </div>
   );
 }

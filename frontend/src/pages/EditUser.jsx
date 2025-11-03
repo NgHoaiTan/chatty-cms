@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import Sidebar from '../components/Sidebar.jsx';
+import ConfirmDialog from '../components/ConfirmDialog.jsx';
 
 function EditUser() {
   const { id } = useParams();
@@ -26,6 +28,15 @@ function EditUser() {
     }
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Confirm dialog states
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: null,
+    type: 'warning'
+  });
 
   // Fetch user data when component mounts
   useEffect(() => {
@@ -64,12 +75,12 @@ function EditUser() {
             }
           });
         } else {
-          alert('Không tìm thấy người dùng');
+          toast.error('Không tìm thấy người dùng');
           navigate('/users');
         }
       } catch (error) {
         console.error('Error fetching user:', error);
-        alert('Có lỗi xảy ra khi tải thông tin người dùng');
+        toast.error('Có lỗi xảy ra khi tải thông tin người dùng');
         navigate('/users');
       } finally {
         setLoading(false);
@@ -129,22 +140,28 @@ function EditUser() {
       });
 
       if (response.data.success) {
-        alert('Cập nhật người dùng thành công!');
+        toast.success('Cập nhật người dùng thành công!');
         navigate('/users');
       }
     } catch (error) {
       console.error('Error updating user:', error);
       const errorMessage = error.response?.data?.message || 'Có lỗi xảy ra khi cập nhật người dùng';
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    if (window.confirm('Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ bị mất.')) {
-      navigate('/users');
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Xác nhận hủy',
+      message: 'Bạn có chắc chắn muốn hủy? Các thay đổi chưa lưu sẽ bị mất.',
+      type: 'warning',
+      onConfirm: () => {
+        navigate('/users');
+      }
+    });
   };
 
   const formatDate = (dateString) => {
@@ -469,6 +486,18 @@ function EditUser() {
           </div>
         </main>
       </div>
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog({ ...confirmDialog, isOpen: false })}
+        onConfirm={confirmDialog.onConfirm || (() => {})}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+      />
     </div>
   );
 }
