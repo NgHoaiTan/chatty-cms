@@ -1,5 +1,5 @@
 import express from 'express';
-import { getUsers, getUserById, getUsersStats, getNewUsersThisMonth, getUsersByMonth, deleteUser, restoreUser } from '../controllers/userController.js';
+import { getUsers, getUserById, getUsersStats, getNewUsersThisMonth, getUsersByMonth, deleteUser, restoreUser, updateUser } from '../controllers/userController.js';
 
 const router = express.Router();
 
@@ -15,7 +15,10 @@ router.get('/new-this-month', getNewUsersThisMonth);
 // Get users count by month for current year
 router.get('/by-month', getUsersByMonth);
 
-// Delete user by ID (phải đặt trước /:id để tránh conflict)
+// Update user by ID (phải đặt trước /:id để tránh conflict)
+router.put('/:id', updateUser);
+
+// Delete user by ID
 router.delete('/:id', deleteUser);
 
 // Restore user by ID

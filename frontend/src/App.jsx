@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
+import EditUser from './pages/EditUser';
 import Posts from './pages/Posts';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
@@ -31,6 +32,10 @@ function App() {
         <Route 
           path="/users" 
           element={checkAuth() ? <Users /> : <Navigate to="/login" replace />} 
+        />
+        <Route 
+          path="/users/:id/edit" 
+          element={checkAuth() ? <EditUser /> : <Navigate to="/login" replace />} 
         />
         <Route 
           path="/posts" 

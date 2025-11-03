@@ -317,3 +317,98 @@ export const getUsersByMonth = async (req, res) => {
   }
 };
 
+export const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, isActive, work, school, location, quote, social } = req.body;
+    
+    // Find auth by ID
+    const auth = await Auth.findById(id);
+    
+    if (!auth) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy người dùng'
+      });
+    }
+
+    // Update Auth - không cho phép update email
+    const authUpdateData = {};
+    if (username !== undefined) {
+      authUpdateData.username = username;
+    }
+    if (isActive !== undefined) {
+      authUpdateData.isActive = isActive;
+    }
+
+    await Auth.findByIdAndUpdate(id, authUpdateData, { new: true });
+
+    // Update User Profile
+    let profile = await UserProfile.findOne({ authId: id });
+    
+    const profileUpdateData = {};
+    if (work !== undefined) profileUpdateData.work = work;
+    if (school !== undefined) profileUpdateData.school = school;
+    if (location !== undefined) profileUpdateData.location = location;
+    if (quote !== undefined) profileUpdateData.quote = quote;
+    
+    // Update social links
+    if (social !== undefined) {
+      // If profile exists and has social, merge with existing social
+      if (profile && profile.social) {
+        profileUpdateData.social = {
+          facebook: profile.social.facebook || '',
+          instagram: profile.social.instagram || '',
+          twitter: profile.social.twitter || '',
+          youtube: profile.social.youtube || ''
+        };
+      } else {
+        profileUpdateData.social = {
+          facebook: '',
+          instagram: '',
+          twitter: '',
+          youtube: ''
+        };
+      }
+      
+      // Update only provided social fields
+      if (social.facebook !== undefined) profileUpdateData.social.facebook = social.facebook;
+      if (social.instagram !== undefined) profileUpdateData.social.instagram = social.instagram;
+      if (social.twitter !== undefined) profileUpdateData.social.twitter = social.twitter;
+      if (social.youtube !== undefined) profileUpdateData.social.youtube = social.youtube;
+    }
+
+    if (profile) {
+      // Update existing profile
+      await UserProfile.findByIdAndUpdate(profile._id, profileUpdateData, { new: true });
+    } else {
+      // Create new profile if doesn't exist
+      profile = await UserProfile.create({
+        authId: id,
+        ...profileUpdateData
+      });
+    }
+
+    // Get updated auth
+    const updatedAuth = await Auth.findById(id);
+    
+    // Get updated profile
+    const updatedProfile = await UserProfile.findOne({ authId: id });
+
+    res.json({
+      success: true,
+      message: 'Cập nhật người dùng thành công',
+      user: {
+        ...updatedAuth.toObject(),
+        profile: updatedProfile?.toObject() || null
+      }
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật người dùng'
+    });
+  }
+};
+
