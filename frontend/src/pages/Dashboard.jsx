@@ -19,12 +19,15 @@ function Dashboard() {
   const [admin, setAdmin] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
+    totalUsersChangePercent: 0,
     activeUsers: 0,
     inactiveUsers: 0,
     usersJoinedThisMonth: 0,
+    usersJoinedChangePercent: 0,
     totalPosts: 0,
-    totalFollowers: 0,
-    totalFollowing: 0
+    postsThisMonth: 0,
+    postsChangePercent: 0,
+    totalComments: 0
   });
   const [newUsers, setNewUsers] = useState([]);
   const [usersByMonth, setUsersByMonth] = useState([]);
@@ -198,15 +201,58 @@ function Dashboard() {
             <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số người dùng</h3>
               <p className="text-4xl font-bold text-blue-600">{stats.totalUsers}</p>
-              <p className="text-xs text-gray-500 mt-2">
-                  
+              <p className="text-xs mt-2 flex items-center gap-1">
+                {stats.totalUsersChangePercent !== 0 && (
+                  <>
+                    {stats.totalUsersChangePercent > 0 ? (
+                      <span className="text-green-600 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        {Math.abs(stats.totalUsersChangePercent).toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-red-600 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                        </svg>
+                        {Math.abs(stats.totalUsersChangePercent).toFixed(1)}%
+                      </span>
+                    )}
+                    <span className="text-gray-500">so với tháng trước</span>
+                  </>
+                )}
               </p>
             </div>
 
             <div className="bg-indigo-50 p-6 rounded-lg border-l-4 border-indigo-500">
               <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số người dùng mới</h3>
               <p className="text-4xl font-bold text-indigo-600">{stats.usersJoinedThisMonth}</p>
-               <p className="text-xs text-gray-500 mt-2">Tính từ đầu tháng đến nay</p>
+              <p className="text-xs mt-2 flex items-center gap-1">
+                {stats.usersJoinedChangePercent !== 0 && (
+                  <>
+                    {stats.usersJoinedChangePercent > 0 ? (
+                      <span className="text-green-600 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        {Math.abs(stats.usersJoinedChangePercent).toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-red-600 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                        </svg>
+                        {Math.abs(stats.usersJoinedChangePercent).toFixed(1)}%
+                      </span>
+                    )}
+                    <span className="text-gray-500">so với tháng trước</span>
+                  </>
+                )}
+                {stats.usersJoinedChangePercent === 0 && (
+                  <span className="text-gray-500">Tính từ đầu tháng đến nay</span>
+                )}
+              </p>
             </div>
 
             <div className="bg-green-50 p-6 rounded-lg border-l-4 border-green-500">
@@ -216,10 +262,32 @@ function Dashboard() {
             </div>
 
             <div className="bg-purple-50 p-6 rounded-lg border-l-4 border-purple-500">
-              <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số lượt theo dõi</h3>
-              <p className="text-4xl font-bold text-purple-600">{stats.totalFollowers}</p>
-              <p className="text-xs text-gray-500 mt-2">
-                Đang theo dõi: <span className="text-blue-600">{stats.totalFollowing}</span>
+              <h3 className="text-sm font-medium text-gray-600 mb-2">Tổng số bài viết mới</h3>
+              <p className="text-4xl font-bold text-purple-600">{stats.postsThisMonth}</p>
+              <p className="text-xs mt-2 flex items-center gap-1">
+                {stats.postsChangePercent !== 0 && (
+                  <>
+                    {stats.postsChangePercent > 0 ? (
+                      <span className="text-green-600 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        {Math.abs(stats.postsChangePercent).toFixed(1)}%
+                      </span>
+                    ) : (
+                      <span className="text-red-600 font-semibold flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                        </svg>
+                        {Math.abs(stats.postsChangePercent).toFixed(1)}%
+                      </span>
+                    )}
+                    <span className="text-gray-500">so với tháng trước</span>
+                  </>
+                )}
+                {stats.postsChangePercent === 0 && (
+                  <span className="text-gray-500">Tính từ đầu tháng đến nay</span>
+                )}
               </p>
             </div>
           </div>

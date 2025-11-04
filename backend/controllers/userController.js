@@ -1,5 +1,7 @@
 import Auth from '../models/Auth.js';
 import UserProfile from '../models/User.js';
+import { CommentsModel } from '../models/Comment.js';
+import { PostModel } from '../models/Post.js';
 
 export const getUsers = async (req, res) => {
   try {
@@ -178,10 +180,36 @@ export const restoreUser = async (req, res) => {
   }
 };
 
+// Helper function to calculate percentage change
+const calculatePercentageChange = (current, previous) => {
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+  return ((current - previous) / previous) * 100;
+};
+
 export const getUsersStats = async (req, res) => {
   try {
+    const now = new Date();
+    
+    // Current month boundaries
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    
+    // Previous month boundaries
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
     // Count all users from Auth collection
     const totalUsers = await Auth.countDocuments();
+    
+    // Count users at end of last month (before current month started)
+    const totalUsersLastMonth = await Auth.countDocuments({
+      createdAt: { $lt: startOfMonth }
+    });
+    
+    // Calculate percentage change for total users
+    const totalUsersChangePercent = calculatePercentageChange(totalUsers, totalUsersLastMonth);
     
     // Count active users (isActive === true)
     const activeUsers = await Auth.countDocuments({ isActive: true });
@@ -194,30 +222,52 @@ export const getUsersStats = async (req, res) => {
       ]
     });
     
-    // Count users joined in current month (based on createdAt)
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    // Count users joined in current month
     const usersJoinedThisMonth = await Auth.countDocuments({
       createdAt: { $gte: startOfMonth, $lt: startOfNextMonth }
     });
     
+    // Count users joined in previous month
+    const usersJoinedLastMonth = await Auth.countDocuments({
+      createdAt: { $gte: startOfLastMonth, $lt: endOfLastMonth }
+    });
+    
+    // Calculate percentage change for new users
+    const usersJoinedChangePercent = calculatePercentageChange(usersJoinedThisMonth, usersJoinedLastMonth);
+    
     // Get profiles for additional stats
     const profiles = await UserProfile.find();
     const totalPosts = profiles.reduce((sum, profile) => sum + (profile.postsCount || 0), 0);
-    const totalFollowers = profiles.reduce((sum, profile) => sum + (profile.followersCount || 0), 0);
-    const totalFollowing = profiles.reduce((sum, profile) => sum + (profile.followingCount || 0), 0);
+    
+    // Count posts created in current month
+    const postsThisMonth = await PostModel.countDocuments({
+      createdAt: { $gte: startOfMonth, $lt: startOfNextMonth }
+    });
+    
+    // Count posts created in previous month
+    const postsLastMonth = await PostModel.countDocuments({
+      createdAt: { $gte: startOfLastMonth, $lt: endOfLastMonth }
+    });
+    
+    // Calculate percentage change for posts
+    const postsChangePercent = calculatePercentageChange(postsThisMonth, postsLastMonth);
+    
+    // Count total comments
+    const totalComments = await CommentsModel.countDocuments();
 
     res.json({
       success: true,
       stats: {
         totalUsers,
+        totalUsersChangePercent,
         activeUsers,
         inactiveUsers,
         usersJoinedThisMonth,
+        usersJoinedChangePercent,
         totalPosts,
-        totalFollowers,
-        totalFollowing
+        postsThisMonth,
+        postsChangePercent,
+        totalComments
       }
     });
   } catch (error) {
